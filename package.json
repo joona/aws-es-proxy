@@ -1,0 +1,23 @@
+{
+  "name": "aws-es-proxy",
+  "version": "1.0.0",
+  "description": "Simple Local AWS ElasticSearch Service proxy",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/joona/aws-es-proxy.git"
+  },
+  "bin": {
+    "aws-es-proxy": "bin/aws-es-proxy"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Joona Kulmala <jmkulmala@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "aws-sdk": "^2.4.7",
+    "co": "^4.6.0",
+    "optimist": "^0.6.1"
+  }
+}

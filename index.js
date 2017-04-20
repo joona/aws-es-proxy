@@ -119,6 +119,15 @@ var main = function() {
       context.region = options.region || 'eu-west-1';
       context.port = options.port || 9200;
 
+      var proxyUrl = process.env.HTTP_PROXY || options['http-proxy'];
+      if(proxyUrl) {
+        var proxy = require('proxy-agent');
+        AWS.config.update({
+          httpOptions: { agent: proxy(proxyUrl) } 
+        });
+      }
+
+
       if(!maybeUrl || (maybeUrl && maybeUrl == 'help') || options.help || options.h) {
         console.log('Usage: aws-es-proxy [options] <url>');
         console.log();

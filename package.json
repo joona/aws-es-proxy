@@ -18,9 +18,10 @@
   "dependencies": {
     "aws-sdk": "^2.4.7",
     "co": "^4.6.0",
-    "optimist": "^0.6.1"
+    "optimist": "^0.6.1",
+    "proxy-agent": "^2.0.0"
   },
-  "engines": { 
-    "node" : ">=4.0.0" 
+  "engines": {
+    "node": ">=4.0.0"
   }
 }

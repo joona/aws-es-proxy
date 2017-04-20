@@ -7,7 +7,11 @@ Easily utilise `curl`, Sense and other tools of your liking to get answers from 
 ## Prequisities
 
 * node >= v4.0.0 (ES6)
-* aws-cli configured for access
+* Make sure your Elasticsearch domain is configured with access policy template "Allow or deny access to one or more AWS accounts or IAM users".
+* Make sure your IAM credentials are discoverable:
+  * via environment variables `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`
+  * via `aws-cli` authentication profile (defaults to profile `default`)
+  * via instance profile on EC2 instance (with IAM role granting access to ES domain)
 
 ## Usage
 
@@ -33,3 +37,6 @@ $ curl http://localhost:9200
   "tagline" : "You Know, for Search"
 }
 ```
+
+## Related
+* [aws-es-curl](https://github.com/joona/aws-es-curl)

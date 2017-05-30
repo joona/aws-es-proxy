@@ -1,15 +1,20 @@
 FROM node:6
 
-WORKDIR /usr/app
+ENV TINI_VERSION v0.14.0
 
-RUN useradd -ms /bin/bash aws-es-proxy
-RUN chown aws-es-proxy:aws-es-proxy /usr/app
+RUN mkdir -p /usr/src/app
+WORKDIR /usr/src/app
 
-ADD index.js /usr/app
-ADD package.json /usr/app
+ARG NODE_ENV
+ENV NODE_ENV $NODE_ENV
+ADD package.json /usr/src/app/
+RUN npm install && npm cache clean
+COPY . /usr/src/app
 
-RUN npm install
+# Add Tini
+ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
+RUN chmod +x /tini
+ENTRYPOINT ["/tini", "--"]
 
 EXPOSE 9200
-
-ENTRYPOINT ["node", "index.js"]
+CMD [ "bin/aws-es-proxy" , "--"]

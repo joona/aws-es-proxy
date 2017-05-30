@@ -1,14 +1,20 @@
-var AWS = require('aws-sdk');
-var co = require('co');
-var url = require('url');
-var http = require('http');
-var options = require('optimist')
+const AWS = require('aws-sdk');
+const co = require('co');
+const url = require('url');
+const http = require('http');
+const options = require('optimist')
   .argv;
 
-var context = {};
+const context = {};
+const profile = process.env.AWS_PROFILE || options.profile || 'default';
 
-var profile = process.env.AWS_PROFILE || options.profile || 'default';
 var creds = {};
+AWS.CredentialProviderChain.defaultProviders = [
+  () => { return new AWS.EnvironmentCredentials('AWS'); },
+  () => { return new AWS.EnvironmentCredentials('AMAZON'); },
+  () => { return new AWS.SharedIniFileCredentials({ profile: profile }); },
+  () => { return new AWS.EC2MetadataCredentials(); }
+];
 
 var execute = function(endpoint, region, path, method, body) {
   return new Promise((resolve, reject) => {
@@ -135,7 +141,6 @@ var main = function() {
       }
 
       var chain = new AWS.CredentialProviderChain();
-      chain.providers.push(new AWS.SharedIniFileCredentials({ profile }));
       yield chain.resolvePromise()
         .then(function (credentials) {
           creds = credentials;

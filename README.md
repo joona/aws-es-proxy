@@ -38,5 +38,29 @@ $ curl http://localhost:9200
 }
 ```
 
+## With Docker
+
+```
+docker build -t aws-es-proxy .
+```
+
+Run and specify credentials via ENV variables.
+
+```
+docker run -it --rm -p 9210:9200 \
+  -e AWS_ACCESS_KEY_ID=... \
+  -e AWS_SECRET_ACCESS_KEY=... \
+  aws-es-proxy -- <elasticsearch_url>
+```
+
+Utilise configuration and profiles from the host. 
+
+```
+docker run -it -v $HOME/.aws:/root/.aws --rm -p 9210:9200 \ 
+  aws-es-proxy -- --profile <profile_name> <elasticsearch_url>
+```
+
+
 ## Related
 * [aws-es-curl](https://github.com/joona/aws-es-curl)
+

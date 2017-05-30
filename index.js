@@ -9,20 +9,28 @@ var context = {};
 
 var profile = process.env.AWS_PROFILE || options.profile || 'default';
 var creds = new AWS.SharedIniFileCredentials({ profile });
+if(!creds.accessKeyId || !creds.secretAccessKey) {
+  if(process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY) {
+    creds = new AWS.Credentials(process.env.AWS_ACCESS_KEY_ID, process.env.AWS_SECRET_ACCESS_KEY);
+  } else {
+    console.log("ERROR: No valid AWS Credentials provided.");
+    process.exit(1);
+  }
+}
 
 var execute = function(endpoint, region, path, method, body) {
   return new Promise((resolve, reject) => {
-    var req = new AWS.HttpRequest(endpoint); 
+    var req = new AWS.HttpRequest(endpoint);
     console.log('AWS HTTP Request:', method, path);
 
 
-    req.method = method || 'GET'; 
-    req.path = path; 
-    req.region = region; 
+    req.method = method || 'GET';
+    req.path = path;
+    req.region = region;
 
     if(body) {
       if(typeof body === "object") {
-        req.body = JSON.stringify(body); 
+        req.body = JSON.stringify(body);
       } else {
         req.body = body;
       }
@@ -32,29 +40,29 @@ var execute = function(endpoint, region, path, method, body) {
     if(req.body && req.method == 'GET') {
       req.method = 'POST';
     }
-    
-    req.headers['presigned-expires'] = false; 
+
+    req.headers['presigned-expires'] = false;
     req.headers.Host = endpoint.host;
 
-    var signer = new AWS.Signers.V4(req, 'es'); 
-    signer.addAuthorization(creds, new Date()); 
-    
-    var send = new AWS.NodeHttpClient(); 
-    send.handleRequest(req, null, (httpResp) => { 
-      var body = ''; 
-      httpResp.on('data', (chunk) => { 
-        body += chunk; 
-      }); 
-      httpResp.on('end', (chunk) => { 
+    var signer = new AWS.Signers.V4(req, 'es');
+    signer.addAuthorization(creds, new Date());
+
+    var send = new AWS.NodeHttpClient();
+    send.handleRequest(req, null, (httpResp) => {
+      var body = '';
+      httpResp.on('data', (chunk) => {
+        body += chunk;
+      });
+      httpResp.on('end', (chunk) => {
         resolve({
           statusCode: httpResp.statusCode,
           body: body
-        }); 
-      }); 
-    }, (err) => { 
-      console.log('Error: ' + err); 
-      reject(err); 
-    }); 
+        });
+      });
+    }, (err) => {
+      console.log('Error: ' + err);
+      reject(err);
+    });
   });
 };
 
@@ -125,7 +133,7 @@ var main = function() {
         console.log('Options:');
         console.log("\t--profile \tAWS profile \t(Default: default)");
         console.log("\t--region \tAWS region \t(Default: eu-west-1)");
-        console.log("\t--port \tLocal port \t(Default: 9800)");
+        console.log("\t--port \tLocal port \t(Default: 9200)");
         process.exit(1);
       }
 

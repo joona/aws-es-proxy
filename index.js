@@ -8,15 +8,17 @@ var options = require('optimist')
 var context = {};
 
 var profile = process.env.AWS_PROFILE || options.profile || 'default';
-var creds = new AWS.SharedIniFileCredentials({ profile });
-if(!creds.accessKeyId || !creds.secretAccessKey) {
-  if(process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY) {
-    creds = new AWS.Credentials(process.env.AWS_ACCESS_KEY_ID, process.env.AWS_SECRET_ACCESS_KEY);
-  } else {
-    console.log("ERROR: No valid AWS Credentials provided.");
-    process.exit(1);
-  }
+var getCredentials = function () {
+  let creds = new AWS.SharedIniFileCredentials({ profile });
+  if(creds && creds.accessKeyId && creds.secretAccessKey) { return creds; }
+
+  creds = AWS.config.credentials;
+  if(creds && creds.accessKeyId && creds.secretAccessKey) { return creds; }
+
+  console.log("ERROR: No valid AWS Credentials provided.");
+  process.exit(1);
 }
+var creds = getCredentials()
 
 var execute = function(endpoint, region, path, method, body) {
   return new Promise((resolve, reject) => {

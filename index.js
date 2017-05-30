@@ -8,17 +8,7 @@ var options = require('optimist')
 var context = {};
 
 var profile = process.env.AWS_PROFILE || options.profile || 'default';
-var getCredentials = function () {
-  let creds = new AWS.SharedIniFileCredentials({ profile });
-  if(creds && creds.accessKeyId && creds.secretAccessKey) { return creds; }
-
-  creds = AWS.config.credentials;
-  if(creds && creds.accessKeyId && creds.secretAccessKey) { return creds; }
-
-  console.log("ERROR: No valid AWS Credentials provided.");
-  process.exit(1);
-}
-var creds = getCredentials()
+var creds = {};
 
 var execute = function(endpoint, region, path, method, body) {
   return new Promise((resolve, reject) => {
@@ -143,6 +133,18 @@ var main = function() {
         var uri = url.parse(maybeUrl);
         context.endpoint = new AWS.Endpoint(uri.host);
       }
+
+      var chain = new AWS.CredentialProviderChain();
+      chain.providers.push(new AWS.SharedIniFileCredentials({ profile }));
+      yield chain.resolvePromise()
+        .then(function (credentials) {
+          creds = credentials;
+        })
+        .catch(function (err) {
+          console.log('Error while getting AWS Credentials.')
+          console.log(err);
+          process.exit(1);
+        });
 
       yield startServer();
     })

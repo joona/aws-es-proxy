@@ -6,15 +6,8 @@ const options = require('optimist')
   .argv;
 
 const context = {};
-const profile = process.env.AWS_PROFILE || options.profile || 'default';
-
+process.env.AWS_PROFILE = process.env.AWS_PROFILE || options.profile || 'default';
 var creds = {};
-AWS.CredentialProviderChain.defaultProviders = [
-  () => { return new AWS.EnvironmentCredentials('AWS'); },
-  () => { return new AWS.EnvironmentCredentials('AMAZON'); },
-  () => { return new AWS.SharedIniFileCredentials({ profile: profile }); },
-  () => { return new AWS.EC2MetadataCredentials(); }
-];
 
 var execute = function(endpoint, region, path, method, body) {
   return new Promise((resolve, reject) => {

@@ -2,7 +2,7 @@
 
 Easily utilise `curl`, Sense and other tools of your liking to get answers from your AWS hosted ElasticSearch Service while developing or debugging.
 
-`aws-es-proxy` is a dead simple local proxy, that knows how to sign your requests and talk to a hosted AWS ElasticSearch Service. 
+`aws-es-proxy` is a dead simple local proxy, that knows how to sign your requests and talk to a hosted AWS ElasticSearch Service.
 
 ## Prequisities
 
@@ -50,17 +50,16 @@ Run and specify credentials via ENV variables.
 docker run -it --rm -p 9210:9200 \
   -e AWS_ACCESS_KEY_ID=... \
   -e AWS_SECRET_ACCESS_KEY=... \
-  aws-es-proxy -- <elasticsearch_url>
+  aws-es-proxy <elasticsearch_url>
 ```
 
-Utilise configuration and profiles from the host. 
+Utilise configuration and profiles from the host.
 
 ```
-docker run -it -v $HOME/.aws:/root/.aws --rm -p 9210:9200 \ 
-  aws-es-proxy -- --profile <profile_name> <elasticsearch_url>
+docker run -it -v $HOME/.aws:/root/.aws --rm -p 9210:9200 \
+  aws-es-proxy --profile <profile_name> <elasticsearch_url>
 ```
 
 
 ## Related
 * [aws-es-curl](https://github.com/joona/aws-es-curl)
-

@@ -2,69 +2,79 @@ const AWS = require('aws-sdk');
 const co = require('co');
 const url = require('url');
 const http = require('http');
-const options = require('optimist')
-  .argv;
+const options = require('optimist').argv;
 
 const context = {};
-const profile = process.env.AWS_PROFILE || options.profile || 'default';
-
+process.env.AWS_PROFILE = process.env.AWS_PROFILE || options.profile || 'default';
 var creds = {};
-AWS.CredentialProviderChain.defaultProviders = [
-  () => { return new AWS.EnvironmentCredentials('AWS'); },
-  () => { return new AWS.EnvironmentCredentials('AMAZON'); },
-  () => { return new AWS.SharedIniFileCredentials({ profile: profile }); },
-  () => { return new AWS.EC2MetadataCredentials(); }
-];
 
-var execute = function(endpoint, region, path, method, body) {
-  return new Promise((resolve, reject) => {
-    var req = new AWS.HttpRequest(endpoint);
-    console.log('AWS HTTP Request:', method, path);
-
-
-    req.method = method || 'GET';
-    req.path = path;
-    req.region = region;
-
-    if(body) {
-      if(typeof body === "object") {
-        req.body = JSON.stringify(body);
-      } else {
-        req.body = body;
+var updateCredentials = function () {
+  return new Promise(function (resolve, reject) {
+    AWS.config.getCredentials(function (err) {
+      if(err) {
+        console.log('Error while getting Credentials.');
+        console.log(err);
+        reject(err)
       }
-    }
+      resolve()
+    })
+  });
+}
 
-    // Sense likes send GET request with body, which aws-sdk doesn't really allow. Translate to POST instead.
-    if(req.body && req.method == 'GET') {
-      req.method = 'POST';
-    }
+var execute = function (endpoint, region, path, method, body) {
+  return new Promise((resolve, reject) => {
+    co(function* () {
 
-    req.headers['presigned-expires'] = false;
-    req.headers.Host = endpoint.host;
+        var req = new AWS.HttpRequest(endpoint);
+        console.log('AWS HTTP Request:', method, path);
 
-    var signer = new AWS.Signers.V4(req, 'es');
-    signer.addAuthorization(creds, new Date());
+        req.method = method || 'GET';
+        req.path = path;
+        req.region = region;
 
-    var send = new AWS.NodeHttpClient();
-    send.handleRequest(req, null, (httpResp) => {
-      var body = '';
-      httpResp.on('data', (chunk) => {
-        body += chunk;
-      });
-      httpResp.on('end', (chunk) => {
-        resolve({
-          statusCode: httpResp.statusCode,
-          body: body
+        if(body) {
+          if(typeof body === "object") {
+            req.body = JSON.stringify(body);
+          } else {
+            req.body = body;
+          }
+        }
+
+        // Sense likes send GET request with body, which aws-sdk doesn't really allow. Translate to POST instead.
+        if(req.body && req.method == 'GET') {
+          req.method = 'POST';
+        }
+
+        req.headers['presigned-expires'] = false;
+        req.headers.Host = endpoint.host;
+
+        // Some credentials may require refresh, updateCredentials handles this
+        yield updateCredentials()
+        var signer = new AWS.Signers.V4(req, 'es');
+        signer.addAuthorization(AWS.config.credentials, new Date());
+
+        var send = new AWS.NodeHttpClient();
+        send.handleRequest(req, null, (httpResp) => {
+          var body = '';
+          httpResp.on('data', (chunk) => {
+            body += chunk;
+          });
+          httpResp.on('end', (chunk) => {
+            resolve({
+              statusCode: httpResp.statusCode,
+              body: body
+            });
+          });
+        }, (err) => {
+          console.log('Error: ' + err);
+          reject(err);
         });
-      });
-    }, (err) => {
-      console.log('Error: ' + err);
-      reject(err);
-    });
+      })
+      .catch(err => reject(err))
   });
 };
 
-var readBody = function(request) {
+var readBody = function (request) {
   return new Promise(resolve => {
     var body = [];
 
@@ -79,7 +89,7 @@ var readBody = function(request) {
   });
 };
 
-var requestHandler = function(request, response) {
+var requestHandler = function (request, response) {
   var body = [];
 
   request.on('data', chunk => {
@@ -90,7 +100,7 @@ var requestHandler = function(request, response) {
     var buf = Buffer.concat(body).toString();
     console.log('Body:', buf);
 
-    co(function*(){
+    co(function* () {
         return yield execute(context.endpoint, context.region, request.url, request.method, buf);
       })
       .then(resp => {
@@ -109,18 +119,17 @@ var requestHandler = function(request, response) {
 
 var server = http.createServer(requestHandler);
 
-var startServer = function() {
+var startServer = function () {
   return new Promise((resolve) => {
-    server.listen(context.port, function(){
+    server.listen(context.port, function () {
       console.log('Listening on', context.port);
       resolve();
     });
   });
 };
 
-
-var main = function() {
-  co(function*(){
+var main = function () {
+  co(function* () {
       var maybeUrl = options._[0];
       context.region = options.region || 'eu-west-1';
       context.port = options.port || 9200;
@@ -140,14 +149,9 @@ var main = function() {
         context.endpoint = new AWS.Endpoint(uri.host);
       }
 
-      var chain = new AWS.CredentialProviderChain();
-      yield chain.resolvePromise()
-        .then(function (credentials) {
-          creds = credentials;
-        })
-        .catch(function (err) {
-          console.log('Error while getting AWS Credentials.')
-          console.log(err);
+      yield updateCredentials()
+        .catch(err => {
+          // if we cannot find credentials, exit
           process.exit(1);
         });
 

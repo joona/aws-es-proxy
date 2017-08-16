@@ -1,6 +1,6 @@
-FROM node:6
+FROM node:6.11
 
-ENV TINI_VERSION v0.14.0
+ENV TINI_VERSION v0.15.0
 
 RUN mkdir -p /usr/src/app
 WORKDIR /usr/src/app
@@ -14,5 +14,3 @@ COPY . /usr/src/app
 ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
 RUN chmod +x /tini
 ENTRYPOINT ["/tini", "bin/aws-es-proxy", "--"]
-
-EXPOSE 9200

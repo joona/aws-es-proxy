@@ -1,6 +1,6 @@
-FROM node:6
+FROM node:6.11
 
-ENV TINI_VERSION v0.14.0
+ENV TINI_VERSION v0.15.0
 
 RUN mkdir -p /usr/src/app
 WORKDIR /usr/src/app

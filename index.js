@@ -19,8 +19,10 @@ AWS.CredentialProviderChain.defaultProviders = [
 var execute = function(endpoint, region, path, method, body) {
   return new Promise((resolve, reject) => {
     var req = new AWS.HttpRequest(endpoint);
-    console.log('AWS HTTP Request:', method, path);
 
+    if(options.quiet !== true) {
+      console.log('>>>', method, path);
+    }
 
     req.method = method || 'GET';
     req.path = path;
@@ -73,7 +75,6 @@ var readBody = function(request) {
     });
 
     request.on('end', _ => {
-      console.log('end:', body.length);
       resolve(Buffer.concat(body).toString());
     });
   });
@@ -88,7 +89,6 @@ var requestHandler = function(request, response) {
 
   request.on('end', _ => {
     var buf = Buffer.concat(body).toString();
-    console.log('Body:', buf);
 
     co(function*(){
         return yield execute(context.endpoint, context.region, request.url, request.method, buf);
@@ -131,7 +131,8 @@ var main = function() {
         console.log('Options:');
         console.log("\t--profile \tAWS profile \t(Default: default)");
         console.log("\t--region \tAWS region \t(Default: eu-west-1)");
-        console.log("\t--port \tLocal port \t(Default: 9200)");
+        console.log("\t--port  \tLocal port \t(Default: 9200)");
+        console.log("\t--quiet  \tLog less");
         process.exit(1);
       }
 

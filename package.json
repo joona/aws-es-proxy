@@ -16,7 +16,7 @@
   "author": "Joona Kulmala <jmkulmala@gmail.com>",
   "license": "MIT",
   "dependencies": {
-    "aws-sdk": "^2.4.7",
+    "aws-sdk": "^2.149.0",
     "co": "^4.6.0",
     "optimist": "^0.6.1"
   },

@@ -1,6 +1,6 @@
 {
   "name": "aws-es-proxy",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Simple Local AWS ElasticSearch Service proxy",
   "main": "index.js",
   "repository": {

@@ -39,18 +39,18 @@ var execute = function(endpoint, region, path, headers, method, body) {
     // from the browser.  We must strip any connection control, transport encoding
     // incorrect Origin headers, and make sure we don't change the Host header from
     // the one used for signing
-    var entries = Object.entries(headers)
-    for (var i=0, len=entries.length; i<len; i++) {
-            if (entries[i][0] != "host" && 
-                entries[i][0] != "accept-encoding" &&
-                entries[i][0] != "connection" &&
-                entries[i][0] != "origin") {
-                req.headers[entries[i][0]] = entries[i][1]
-            }
+    var keys = Object.keys(headers)
+    for (var i = 0, len = keys.length; i < len; i++) {
+      if (keys[i] != "host" && 
+        keys[i] != "accept-encoding" &&
+        keys[i] != "connection" &&
+        keys[i] != "origin") {
+        req.headers[keys[i]] = headers[keys[i]];
+      }
     }
 
-    var send = new AWS.NodeHttpClient();
-    send.handleRequest(req, null, (httpResp) => {
+    var client = new AWS.NodeHttpClient();
+    client.handleRequest(req, null, (httpResp) => {
       var body = '';
       httpResp.on('data', (chunk) => {
         body += chunk;
@@ -100,14 +100,15 @@ var requestHandler = function(request, response) {
         // We need to pass through the response headers from the origin
         // back to the UA, but strip any connection control and content encoding
         // headers
-        headers = {}
-        entries = Object.entries(resp.headers)
-        for (var i=0,  nent = entries.length; i<nent; i++) {
-                k = entries[i][0]; v=entries[i][1]
-                if (k != undefined && k != "connection" && k != "content-encoding") {
-                        headers[k] = v
-                }
+        var headers = {}
+        var keys = Object.keys(resp.headers);
+        for (var i = 0, klen = keys.length; i < klen; i++) {
+          var k = keys[i]; 
+          if (k != undefined && k != "connection" && k != "content-encoding") {
+            headers[k] = resp.headers[keys[i]];
+          }
         }
+
         response.writeHead(resp.statusCode, headers);
         response.end(resp.body);
       })

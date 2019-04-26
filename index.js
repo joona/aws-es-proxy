@@ -18,6 +18,7 @@ AWS.CredentialProviderChain.defaultProviders = [
 
 var execute = function(endpoint, region, path, headers, method, body) {
   return new Promise((resolve, reject) => {
+  co(function* () {
     var req = new AWS.HttpRequest(endpoint);
 
     if(options.quiet !== true) {
@@ -31,6 +32,18 @@ var execute = function(endpoint, region, path, headers, method, body) {
 
     req.headers['presigned-expires'] = false;
     req.headers.Host = endpoint.host;
+
+    // Some credentials may require refresh, fetch credentails to handles this
+    var chain = new AWS.CredentialProviderChain();
+    yield chain.resolvePromise()
+      .then(function (credentials) {
+        creds = credentials;
+      })
+      .catch(function (err) {
+        console.log('Error while getting AWS Credentials.')
+        console.log(err);
+        process.exit(1);
+      });
 
     var signer = new AWS.Signers.V4(req, 'es');
     signer.addAuthorization(creds, new Date());
@@ -66,6 +79,8 @@ var execute = function(endpoint, region, path, headers, method, body) {
       console.log('Error: ' + err);
       reject(err);
     });
+  })
+  .catch(err => reject(err))
   });
 };
 
